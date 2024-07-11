@@ -92,7 +92,7 @@ def f():
                 }
                 recommendations.append(item_info)
         except IndexError:
-            print(f"Category '{user_input}' not found in master data.")
+            print(f"Category '{user_input}' not found in master data")
     
     return pd.DataFrame(recommendations)
 
