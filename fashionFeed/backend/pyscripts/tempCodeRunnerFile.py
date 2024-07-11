@@ -1,1 +1,2 @@
-master_df.rename(columns={'name':'product'}, inplace=True)
+from sklearn.feature_extraction.text import TfidfVectorizer
+# from sklearn.preprocessing import OneHotEncoder
