@@ -1,6 +1,7 @@
 import pandas as pd
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.metrics.pairwise import cosine_similarity
+import os
 
 master_csv_path = "C:/Users/tanay/Downloads/myntra_excel.csv"
 order_csv_path = 'C:/Users/tanay/Desktop/tan/files/userOrders.csv'
@@ -99,6 +100,11 @@ def f():
 recommendations_df = f()
 
 print(recommendations_df)
+project_dir = "C:/Users/tanay/Desktop/tan/myntra-hackerramp/fashionFeed"
+data_dir = os.path.join(project_dir, "data")
+file_path = os.path.join(data_dir, "recommendations.csv")
+os.makedirs(data_dir, exist_ok=True)
+recommendations_df.to_csv(file_path, index=False)
 
     
     # similarities = cos_sim[idx]
