@@ -40,10 +40,6 @@ most_ordered_brand = userOrders_df['brand'].value_counts().idxmax()
 most_wishlisted_brand = userWishlist_df['brand'].value_counts().idxmax()
 
 # print(most_ordered_brand, '/n',most_wishlisted_brand)
-# print(userOrders_df.isnull().sum())
-# print(userWishlist_df.isnull().sum())
-# print(userSearch_df.isnull().sum())
-
 # print(df['purl'].iloc[0])
 
 def get_category(url):
@@ -57,7 +53,7 @@ df['category'] = df['link'].apply(lambda x: pd.Series(get_category(x)))
 
 #content based filtering
 
-tfidf = TfidfVectorizer(min_df=2, ngram_range=(1,1))
+tfidf = TfidfVectorizer(min_df=2, ngram_range=(1,3))
 
 df['data'] = df['category'] + ' ' + df['item'] + ' ' + df['brand']
 master_category = df['data'].to_list()
@@ -71,33 +67,54 @@ tfidf.fit(all_desc)
 
 master_matrix = tfidf.transform(master_category)
 user_matrix = tfidf.transform(user_category)
-cos_sim = cosine_similarity(master_matrix)  
+cos_sim = cosine_similarity(master_matrix)
+
+# calculating preferred price range
+
+user_ordered_price = userOrders_df['price']
+meanPrice = user_ordered_price.mean()
+stdPrice = user_ordered_price.std()
+preferred_range = (meanPrice-stdPrice, meanPrice+stdPrice)
 
 def f():
     recommendations = []
+    added_ids = set()
+    brand_freq = {}
 
-    for user_input in user_cat:
+    for user_input in user_category:
         # Find index of the first occurrence of user_input in the dataframe
-        try:
-            id_of_item = df[df['data'].str.contains(user_input, case=False)].index[0]
-            distances = cos_sim[id_of_item]
-            product_list = sorted(list(enumerate(distances)), reverse=True, key=lambda x: x[1])[1:16]
-            
-            for i in product_list:
-                item_info = {
-                    'id': df['product_id'].iloc[i[0]],
-                    'brand': df['brand'].iloc[i[0]],
-                    'item': df['item'].iloc[i[0]],
-                    'image': df['images'].iloc[i[0]].split('|')[0],
-                    'price': df['variant_price'].iloc[i[0]],                   
-                }
-                recommendations.append(item_info)
-        except IndexError:
-            print(f"Category '{user_input}' not found in master data")
-    
+        words = user_input.split()
+        print()
+        for word in words:
+            print(word)
+            try:
+                id_of_item = df[df['data'].str.contains(word, case=False)].index[0]
+                distances = cos_sim[id_of_item]
+                product_list = sorted(list(enumerate(distances)), reverse=True, key=lambda x: x[1])[1:11]
+                
+                for i in product_list:
+                    item_id = df['product_id'].iloc[i[0]]
+                    item_price = df['variant_price'].iloc[i[0]]
+                    item_brand = df['brand'].iloc[i[0]]
+                    if item_id not in added_ids and (preferred_range[0]<=item_price<=preferred_range[1]):
+                        if brand_freq.get(item_brand, 0) < 5:
+                            brand_freq[item_brand] = brand_freq.get(item_brand, 0) + 1 
+                            added_ids.add(item_id)
+                            item_info = {
+                                'id': df['product_id'].iloc[i[0]],
+                                'brand': df['brand'].iloc[i[0]],
+                                'item': df['item'].iloc[i[0]],
+                                'image': df['images'].iloc[i[0]].split('|')[0].strip(),
+                                'price': df['variant_price'].iloc[i[0]],                   
+                            }
+                            recommendations.append(item_info)
+            except IndexError:
+                print(f"Category '{word}' not found in master data")
+        
     return pd.DataFrame(recommendations)
 
 recommendations_df = f()
+recommendations_df = recommendations_df.sample(frac=1).reset_index(drop=True)
 
 print(recommendations_df)
 project_dir = "C:/Users/tanay/Desktop/tan/myntra-hackerramp/fashionFeed"
@@ -106,13 +123,6 @@ file_path = os.path.join(data_dir, "recommendations.csv")
 os.makedirs(data_dir, exist_ok=True)
 recommendations_df.to_csv(file_path, index=False)
 
-    
-    # similarities = cos_sim[idx]
-    # print(similarities)
-    # top_indices = similarities.argsort()[-5:][::-1]
-    # print(f"Recommendations for user category '{user_data}':")
-    # for index in top_indices:
-    #     print(f"  {df['item'].iloc[index]}")
 
 
 
