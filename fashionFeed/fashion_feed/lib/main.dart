@@ -1,11 +1,11 @@
 import 'dart:convert';
-import 'package:fashion_feed/screens/home_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
-import '/models/recommendations.dart';
-import '/screens/header.dart';
 import 'package:google_fonts/google_fonts.dart';
+import '/models/recommendations.dart';
 import '/models/wishlist.dart';
+import '/screens/header.dart';
+import 'package:fashion_feed/screens/home_screen.dart';
 
 void main() {
   runApp(MyApp());
@@ -16,14 +16,12 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       theme: ThemeData(
-        textTheme: GoogleFonts.latoTextTheme(Theme.of(context).textTheme)
+        textTheme: GoogleFonts.latoTextTheme(Theme.of(context).textTheme),
       ),
       home: RecommendationScreen(),
     );
   }
 }
-
-
 
 class RecommendationScreen extends StatefulWidget {
   const RecommendationScreen({super.key});
@@ -53,15 +51,16 @@ class _RecommendationScreenState extends State<RecommendationScreen> {
     }
   }
 
-  void handleWishlist(WishlistItem item){
+  void handleWishlist(WishlistItem item) {
     setState(() {
-      if(wishlist.contains(item)){
-        wishlist.remove(item);
-      } else{
+      if (wishlist.any((wishlistItem) => wishlistItem.id == item.id)) {
+        wishlist.removeWhere((wishlistItem) => wishlistItem.id == item.id);
+      } else {
         wishlist.add(item);
       }
     });
   }
+
   void showWishlist() {
     showDialog(
       context: context,
@@ -96,7 +95,7 @@ class _RecommendationScreenState extends State<RecommendationScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: CustomHeader(onWishlistPress: showWishlist,),
+      appBar: CustomHeader(onWishlistPress: showWishlist),
       body: FutureBuilder<List<Recommendation>>(
         future: recommendations,
         builder: (context, snapshot) {
@@ -110,16 +109,12 @@ class _RecommendationScreenState extends State<RecommendationScreen> {
               itemCount: snapshot.data!.length,
               itemBuilder: (context, index) {
                 final recommendation = snapshot.data![index];
-                return RecommendationTile(recommendation: recommendation,
-                onWishlistAdd: () {
-                    handleWishlist(WishlistItem(
-                      id: recommendation.id,
-                      image: recommendation.image,
-                      item: recommendation.item,
-                      brand: recommendation.brand,
-                      price: recommendation.price,
-                    ));
-                  },);
+                final isWishlisted = wishlist.any((wishlistItem) => wishlistItem.id == recommendation.id);
+                return RecommendationTile(
+                  recommendation: recommendation,
+                  onWishlistToggle: handleWishlist,
+                  isInitiallyWishlisted: isWishlisted,
+                );
               },
             );
           }
@@ -130,31 +125,27 @@ class _RecommendationScreenState extends State<RecommendationScreen> {
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
             IconButton(
-              icon: Icon(Icons.auto_awesome_sharp, color: Colors.pink, size: 37.0,),
-              onPressed: (){
-
-              },
-              ),
-            IconButton(
-            icon: Icon(Icons.face, color: Colors.pink,size: 37.0,),
-            onPressed: (){
-
-            },
+              icon: Icon(Icons.auto_awesome_sharp, color: Colors.pink, size: 37.0),
+              onPressed: () {},
             ),
             IconButton(
-              icon: Icon(Icons.home, color: Colors.pink, size: 37.0,),
+              icon: Icon(Icons.face, color: Colors.pink, size: 37.0),
+              onPressed: () {},
+            ),
+            IconButton(
+              icon: Icon(Icons.home, color: Colors.pink, size: 37.0),
               onPressed: () {
                 // Home button action
               },
             ),
             IconButton(
-              icon: Icon(Icons.auto_graph, color: Colors.pink, size: 37.0,),
+              icon: Icon(Icons.auto_graph, color: Colors.pink, size: 37.0),
               onPressed: () {
                 // Home button action
               },
             ),
             IconButton(
-              icon: Icon(Icons.person, color: Colors.pink, size: 37.0,),
+              icon: Icon(Icons.person, color: Colors.pink, size: 37.0),
               onPressed: () {
                 // Profile button action
               },

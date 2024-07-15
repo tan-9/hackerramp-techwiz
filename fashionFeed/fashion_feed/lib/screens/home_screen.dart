@@ -3,16 +3,51 @@ import 'package:google_fonts/google_fonts.dart';
 import '../models/recommendations.dart';
 import '../models/wishlist.dart';
 
-class RecommendationTile extends StatelessWidget {
+class RecommendationTile extends StatefulWidget {
   final Recommendation recommendation;
-  final VoidCallback onWishlistAdd;
+  final Function(WishlistItem) onWishlistToggle;
+  final bool isInitiallyWishlisted;
 
-  const RecommendationTile({Key? key, required this.recommendation, required this.onWishlistAdd}) : super(key: key);
+  const RecommendationTile({
+    Key? key,
+    required this.recommendation,
+    required this.onWishlistToggle,
+    required this.isInitiallyWishlisted,
+  }) : super(key: key);
+
+  @override
+  _RecommendationTileState createState() => _RecommendationTileState();
+}
+
+class _RecommendationTileState extends State<RecommendationTile> {
+  late bool isWishlisted;
+
+  @override
+  void initState(){
+    super.initState();
+    isWishlisted = widget.isInitiallyWishlisted;
+  }
+
+  void toggleWishlist() {
+    final wishlistItem = WishlistItem(
+      id: widget.recommendation.id,
+      brand: widget.recommendation.brand,
+      item: widget.recommendation.item,
+      price: widget.recommendation.price,
+      image: widget.recommendation.image,
+    );
+
+    setState(() {
+      isWishlisted = !isWishlisted;
+    });
+
+    widget.onWishlistToggle(wishlistItem);
+  }
 
   @override
   Widget build(BuildContext context) {
     return Container(
-      height: 590, // Set a fixed width for the card
+      height: 590, // Set a fixed height for the card
       child: Card(
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(15.0),
@@ -22,14 +57,14 @@ class RecommendationTile extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             ClipRRect(
-              borderRadius: BorderRadius.only(
+              borderRadius: const BorderRadius.only(
                 topLeft: Radius.circular(15.0),
                 topRight: Radius.circular(15.0),
               ),
               child: AspectRatio(
                 aspectRatio: 0.85, // Adjust as needed
                 child: Image.network(
-                  recommendation.image,
+                  widget.recommendation.image,
                   width: double.infinity,
                   fit: BoxFit.cover,
                 ),
@@ -41,7 +76,7 @@ class RecommendationTile extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    recommendation.item,
+                    widget.recommendation.item,
                     style: GoogleFonts.lato(
                       fontSize: 16,
                       fontWeight: FontWeight.bold,
@@ -49,9 +84,9 @@ class RecommendationTile extends StatelessWidget {
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                   ),
-                  SizedBox(height: 4),
+                  const SizedBox(height: 4),
                   Text(
-                    recommendation.brand,
+                    widget.recommendation.brand,
                     style: GoogleFonts.lato(
                       fontSize: 14,
                       color: Colors.grey,
@@ -59,12 +94,12 @@ class RecommendationTile extends StatelessWidget {
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                   ),
-                  SizedBox(height: 4),
+                  const SizedBox(height: 4),
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       Text(
-                        '₹${recommendation.price}',
+                        '₹${widget.recommendation.price}',
                         style: GoogleFonts.lato(
                           fontSize: 16,
                           fontWeight: FontWeight.bold,
@@ -76,11 +111,15 @@ class RecommendationTile extends StatelessWidget {
                       Row(
                         children: [
                           IconButton(
-                            icon: Icon(Icons.favorite_border, color: Colors.pink, size: 30.0),
-                            onPressed: onWishlistAdd,
+                            icon: Icon(
+                              isWishlisted ? Icons.favorite : Icons.favorite_border,
+                              color: Colors.pink,
+                              size: 30.0,
+                            ),
+                            onPressed: toggleWishlist,
                           ),
                           IconButton(
-                            icon: Icon(Icons.shopping_bag_outlined, color: Colors.pink, size: 30.0),
+                            icon: const Icon(Icons.shopping_bag_outlined, color: Colors.pink, size: 30.0),
                             onPressed: () {
                               // Handle bag functionality
                             },
